@@ -6,7 +6,9 @@
 <title>Sistema de Rotas | Embarca Cargas</title>
 
 <style>
-body{margin:0;font-family:Arial}
+body{margin:0;font-family:Arial;background:#fff}
+
+/* TOPO */
 .header{
 background:#000;
 color:#fff;
@@ -15,13 +17,42 @@ display:flex;
 align-items:center;
 gap:15px;
 }
+
 .logo{
 width:50px;height:50px;background:#fff;border-radius:8px;
 display:flex;align-items:center;justify-content:center;color:#000;
 }
+
 .titulo{font-weight:bold}
 .sub{font-size:12px;opacity:.7}
-iframe{width:100%;height:90vh;border:0}
+
+/* CONTROLES */
+.controls{
+padding:15px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+input{
+padding:12px;
+width:280px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+padding:12px 20px;
+border:0;
+border-radius:6px;
+background:#000;
+color:#fff;
+cursor:pointer;
+}
+
+/* MAPA */
+#map{height:75vh}
+#status{padding:10px;font-weight:bold}
 </style>
 </head>
 
@@ -29,21 +60,99 @@ iframe{width:100%;height:90vh;border:0}
 
 <div class="header">
 <div class="logo">LOGO</div>
-
 <div>
 <div class="titulo">Sistema de Rotas da Agência Embarca Cargas</div>
 <div class="sub">do Grupo Gabriel Gasparini</div>
 </div>
 </div>
 
-<!-- TROQUE OS ENDEREÇOS AQUI -->
-<iframe
-src="https://maps.app.goo.gl/XDZ9RA1NoKYjcyqj7">
-</iframe>
-<iframe
-src="https://maps.app.goo.gl/cvRHLuJquSdkWQpp6">
-</iframe>
-  
+<div class="controls">
+<input id="origem" placeholder="Link ou endereço da origem">
+<input id="destino" placeholder="Link ou endereço do destino">
+<button onclick="iniciar()">Iniciar Transporte</button>
+</div>
+
+<div id="status"></div>
+<div id="map"></div>
+
+<script>
+let map, directionsService, directionsRenderer;
+let truckMarker;
+
+function initMap(){
+map=new google.maps.Map(document.getElementById("map"),{
+center:{lat:-23.5,lng:-46.6},
+zoom:7
+});
+
+directionsService=new google.maps.DirectionsService();
+directionsRenderer=new google.maps.DirectionsRenderer({map});
+}
+
+function iniciar(){
+
+const origem=document.getElementById("origem").value;
+const destino=document.getElementById("destino").value;
+
+if(!origem||!destino){
+alert("Informe origem e destino");
+return;
+}
+
+document.getElementById("status").innerText="Transporte em andamento...";
+
+directionsService.route({
+origin:origem,
+destination:destino,
+travelMode:"DRIVING"
+},(result,status)=>{
+
+if(status!=="OK"){
+alert("Erro ao calcular rota");
+return;
+}
+
+directionsRenderer.setDirections(result);
+
+const rota=result.routes[0].overview_path;
+animarCaminhao(rota);
+
+});
+}
+
+function animarCaminhao(caminho){
+
+let i=0;
+
+if(truckMarker) truckMarker.setMap(null);
+
+truckMarker=new google.maps.Marker({
+position:caminho[0],
+map,
+icon:"https://maps.google.com/mapfiles/kml/shapes/truck.png"
+});
+
+function mover(){
+
+if(i>=caminho.length){
+document.getElementById("status").innerText="Carga Finalizada";
+return;
+}
+
+truckMarker.setPosition(caminho[i]);
+map.panTo(caminho[i]);
+i++;
+
+setTimeout(mover,200); // velocidade do caminhão
+}
+
+mover();
+}
+</script>
+
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=SUA_API_KEY_AQUI&callback=initMap">
+</script>
+
 </body>
 </html>
-
